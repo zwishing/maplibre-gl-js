@@ -1,22 +1,22 @@
 //#region \0rolldown/runtime.js
-var __create$1 = Object.create;
-var __defProp$1 = Object.defineProperty;
-var __getOwnPropDesc$1 = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames$1 = Object.getOwnPropertyNames;
-var __getProtoOf$1 = Object.getPrototypeOf;
-var __hasOwnProp$1 = Object.prototype.hasOwnProperty;
-var __commonJSMin$1 = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod), cb = null), mod.exports);
-var __copyProps$1 = (to, from, except, desc) => {
-	if (from && typeof from === "object" || typeof from === "function") for (var keys = __getOwnPropNames$1(from), i = 0, n = keys.length, key; i < n; i++) {
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod), cb = null), mod.exports);
+var __copyProps = (to, from, except, desc) => {
+	if (from && typeof from === "object" || typeof from === "function") for (var keys = __getOwnPropNames(from), i = 0, n = keys.length, key; i < n; i++) {
 		key = keys[i];
-		if (!__hasOwnProp$1.call(to, key) && key !== except) __defProp$1(to, key, {
+		if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
 			get: ((k) => from[k]).bind(null, key),
-			enumerable: !(desc = __getOwnPropDesc$1(from, key)) || desc.enumerable
+			enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
 		});
 	}
 	return to;
 };
-var __toESM$1 = (mod, isNodeMode, target) => (target = mod != null ? __create$1(__getProtoOf$1(mod)) : {}, __copyProps$1(isNodeMode || !mod || !mod.__esModule ? __defProp$1(target, "default", {
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", {
 	value: mod,
 	enumerable: true
 }) : target, mod));
@@ -320,60 +320,40 @@ Point.convert = function(p) {
 	throw new Error("Expected [x, y] or {x, y} point format");
 };
 //#endregion
-//#region src/util/offscreen_canvas_supported.ts
-var import_unitbezier$1 = /* @__PURE__ */ __toESM$1((/* @__PURE__ */ __commonJSMin$1(((exports, module) => {
-	module.exports = UnitBezier;
-	function UnitBezier(p1x, p1y, p2x, p2y) {
-		this.cx = 3 * p1x;
-		this.bx = 3 * (p2x - p1x) - this.cx;
-		this.ax = 1 - this.cx - this.bx;
-		this.cy = 3 * p1y;
-		this.by = 3 * (p2y - p1y) - this.cy;
-		this.ay = 1 - this.cy - this.by;
-		this.p1x = p1x;
-		this.p1y = p1y;
-		this.p2x = p2x;
-		this.p2y = p2y;
-	}
-	UnitBezier.prototype = {
-		sampleCurveX: function(t) {
-			return ((this.ax * t + this.bx) * t + this.cx) * t;
-		},
-		sampleCurveY: function(t) {
-			return ((this.ay * t + this.by) * t + this.cy) * t;
-		},
-		sampleCurveDerivativeX: function(t) {
-			return (3 * this.ax * t + 2 * this.bx) * t + this.cx;
-		},
-		solveCurveX: function(x, epsilon) {
-			if (epsilon === void 0) epsilon = 1e-6;
-			if (x < 0) return 0;
-			if (x > 1) return 1;
-			var t = x;
-			for (var i = 0; i < 8; i++) {
-				var x2 = this.sampleCurveX(t) - x;
-				if (Math.abs(x2) < epsilon) return t;
-				var d2 = this.sampleCurveDerivativeX(t);
-				if (Math.abs(d2) < 1e-6) break;
-				t = t - x2 / d2;
-			}
-			var t0 = 0;
-			var t1 = 1;
-			t = x;
-			for (i = 0; i < 20; i++) {
-				x2 = this.sampleCurveX(t);
-				if (Math.abs(x2 - x) < epsilon) break;
-				if (x > x2) t0 = t;
-				else t1 = t;
-				t = (t1 - t0) * .5 + t0;
-			}
-			return t;
-		},
-		solve: function(x, epsilon) {
-			return this.sampleCurveY(this.solveCurveX(x, epsilon));
+//#region node_modules/@mapbox/unitbezier/index.js
+function unitBezier$1(p1x, p1y, p2x, p2y) {
+	const cx = 3 * p1x;
+	const bx = 3 * (p2x - p1x) - cx;
+	const ax = 1 - cx - bx;
+	const cy = 3 * p1y;
+	const by = 3 * (p2y - p1y) - cy;
+	const ay = 1 - cy - by;
+	return function solve(x, epsilon = 1e-6) {
+		if (x <= 0) return 0;
+		if (x >= 1) return 1;
+		let t = x;
+		for (let i = 0; i < 8; i++) {
+			const x2 = ((ax * t + bx) * t + cx) * t - x;
+			if (Math.abs(x2) < epsilon) return ((ay * t + by) * t + cy) * t;
+			const d2 = (3 * ax * t + 2 * bx) * t + cx;
+			if (Math.abs(d2) < 1e-6) break;
+			t -= x2 / d2;
 		}
+		let t0 = 0;
+		let t1 = 1;
+		t = x;
+		for (let i = 0; i < 20; i++) {
+			const x2 = ((ax * t + bx) * t + cx) * t;
+			if (Math.abs(x2 - x) < epsilon) break;
+			if (x > x2) t0 = t;
+			else t1 = t;
+			t = (t0 + t1) * .5;
+		}
+		return ((ay * t + by) * t + cy) * t;
 	};
-})))(), 1);
+}
+//#endregion
+//#region src/util/offscreen_canvas_supported.ts
 let supportsOffscreenCanvas;
 function offscreenCanvasSupported() {
 	supportsOffscreenCanvas ??= typeof OffscreenCanvas !== "undefined" && new OffscreenCanvas(1, 1).getContext("2d") && typeof createImageBitmap === "function";
@@ -523,10 +503,7 @@ function easeCubicInOut(t) {
 * @param p2y - control point 2 y coordinate
 */
 function bezier(p1x, p1y, p2x, p2y) {
-	const bezier = new import_unitbezier$1.default(p1x, p1y, p2x, p2y);
-	return (t) => {
-		return bezier.solve(t);
-	};
+	return unitBezier$1(p1x, p1y, p2x, p2y);
 }
 bezier(.25, .1, .25, 1);
 /**
@@ -763,6 +740,36 @@ function degreesToRadians(degrees) {
 	return degrees * Math.PI / 180;
 }
 //#endregion
+//#region src/util/abort_error.ts
+/**
+* An error message to use when an operation is aborted
+*/
+const ABORT_ERROR = "AbortError";
+var AbortError = class extends Error {
+	constructor(messageOrError = ABORT_ERROR) {
+		super(messageOrError instanceof Error ? messageOrError.message : messageOrError);
+		this.name = ABORT_ERROR;
+		if (messageOrError instanceof Error && messageOrError.stack) this.stack = messageOrError.stack;
+	}
+};
+/**
+* Check if an error is an abort error
+* @param error - An error object
+* @returns - true if the error is an abort error
+*/
+function isAbortError(error) {
+	return error instanceof Error && error.name === "AbortError";
+}
+/**
+* Throws an AbortError if the provided abort signal has already been aborted.
+*
+* @param signal - The abort signal to check.
+* @throws AbortError If the signal is aborted.
+*/
+function throwIfAborted(signal) {
+	if (signal.aborted) throw new AbortError(signal.reason);
+}
+//#endregion
 //#region src/util/transferable_grid_index.ts
 const NUM_PARAMS = 3;
 var TransferableGridIndex = class TransferableGridIndex {
@@ -889,29 +896,6 @@ var TransferableGridIndex = class TransferableGridIndex {
 		return new TransferableGridIndex(serialized.buffer);
 	}
 };
-//#endregion
-//#region node_modules/@maplibre/maplibre-gl-style-spec/dist/index.mjs
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod), cb = null), mod.exports);
-var __copyProps = (to, from, except, desc) => {
-	if (from && typeof from === "object" || typeof from === "function") for (var keys = __getOwnPropNames(from), i = 0, n = keys.length, key; i < n; i++) {
-		key = keys[i];
-		if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
-			get: ((k) => from[k]).bind(null, key),
-			enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
-		});
-	}
-	return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", {
-	value: mod,
-	enumerable: true
-}) : target, mod));
 var v8_default = {
 	$version: 8,
 	$root: {
@@ -2351,11 +2335,22 @@ var v8_default = {
 			},
 			"property-type": "data-driven"
 		},
+		"fill-layer-opacity": {
+			"type": "number",
+			"default": 1,
+			"minimum": 0,
+			"maximum": 1,
+			"transition": true,
+			"expression": {
+				"interpolated": true,
+				"parameters": ["zoom", "global-state"]
+			},
+			"property-type": "data-constant"
+		},
 		"fill-color": {
 			"type": "color",
 			"default": "#000000",
 			"transition": true,
-			"requires": [{ "!": "fill-pattern" }],
 			"expression": {
 				"interpolated": true,
 				"parameters": [
@@ -2541,6 +2536,18 @@ var v8_default = {
 				]
 			},
 			"property-type": "data-driven"
+		},
+		"line-layer-opacity": {
+			"type": "number",
+			"default": 1,
+			"minimum": 0,
+			"maximum": 1,
+			"transition": true,
+			"expression": {
+				"interpolated": true,
+				"parameters": ["zoom", "global-state"]
+			},
+			"property-type": "data-constant"
 		},
 		"line-color": {
 			"type": "color",
@@ -5016,7 +5023,7 @@ var RuntimeError = class extends Error {
 	}
 };
 /** Set of valid anchor positions, as a set for validation */
-const anchors = new Set([
+const anchors = /* @__PURE__ */ new Set([
 	"center",
 	"left",
 	"right",
@@ -5896,59 +5903,37 @@ var Step = class Step {
 		return this.outputs.every((out) => out.outputDefined());
 	}
 };
-var import_unitbezier = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((exports, module) => {
-	module.exports = UnitBezier;
-	function UnitBezier(p1x, p1y, p2x, p2y) {
-		this.cx = 3 * p1x;
-		this.bx = 3 * (p2x - p1x) - this.cx;
-		this.ax = 1 - this.cx - this.bx;
-		this.cy = 3 * p1y;
-		this.by = 3 * (p2y - p1y) - this.cy;
-		this.ay = 1 - this.cy - this.by;
-		this.p1x = p1x;
-		this.p1y = p1y;
-		this.p2x = p2x;
-		this.p2y = p2y;
-	}
-	UnitBezier.prototype = {
-		sampleCurveX: function(t) {
-			return ((this.ax * t + this.bx) * t + this.cx) * t;
-		},
-		sampleCurveY: function(t) {
-			return ((this.ay * t + this.by) * t + this.cy) * t;
-		},
-		sampleCurveDerivativeX: function(t) {
-			return (3 * this.ax * t + 2 * this.bx) * t + this.cx;
-		},
-		solveCurveX: function(x, epsilon) {
-			if (epsilon === void 0) epsilon = 1e-6;
-			if (x < 0) return 0;
-			if (x > 1) return 1;
-			var t = x;
-			for (var i = 0; i < 8; i++) {
-				var x2 = this.sampleCurveX(t) - x;
-				if (Math.abs(x2) < epsilon) return t;
-				var d2 = this.sampleCurveDerivativeX(t);
-				if (Math.abs(d2) < 1e-6) break;
-				t = t - x2 / d2;
-			}
-			var t0 = 0;
-			var t1 = 1;
-			t = x;
-			for (i = 0; i < 20; i++) {
-				x2 = this.sampleCurveX(t);
-				if (Math.abs(x2 - x) < epsilon) break;
-				if (x > x2) t0 = t;
-				else t1 = t;
-				t = (t1 - t0) * .5 + t0;
-			}
-			return t;
-		},
-		solve: function(x, epsilon) {
-			return this.sampleCurveY(this.solveCurveX(x, epsilon));
+function unitBezier(p1x, p1y, p2x, p2y) {
+	const cx = 3 * p1x;
+	const bx = 3 * (p2x - p1x) - cx;
+	const ax = 1 - cx - bx;
+	const cy = 3 * p1y;
+	const by = 3 * (p2y - p1y) - cy;
+	const ay = 1 - cy - by;
+	return function solve(x, epsilon = 1e-6) {
+		if (x <= 0) return 0;
+		if (x >= 1) return 1;
+		let t = x;
+		for (let i = 0; i < 8; i++) {
+			const x2 = ((ax * t + bx) * t + cx) * t - x;
+			if (Math.abs(x2) < epsilon) return ((ay * t + by) * t + cy) * t;
+			const d2 = (3 * ax * t + 2 * bx) * t + cx;
+			if (Math.abs(d2) < 1e-6) break;
+			t -= x2 / d2;
 		}
+		let t0 = 0;
+		let t1 = 1;
+		t = x;
+		for (let i = 0; i < 20; i++) {
+			const x2 = ((ax * t + bx) * t + cx) * t;
+			if (Math.abs(x2 - x) < epsilon) break;
+			if (x > x2) t0 = t;
+			else t1 = t;
+			t = (t0 + t1) * .5;
+		}
+		return ((ay * t + by) * t + cy) * t;
 	};
-})))(), 1);
+}
 var Interpolate = class Interpolate {
 	constructor(type, operator, interpolation, input, stops) {
 		this.type = type;
@@ -5968,7 +5953,7 @@ var Interpolate = class Interpolate {
 		else if (interpolation.name === "linear") t = exponentialInterpolation(input, 1, lower, upper);
 		else if (interpolation.name === "cubic-bezier") {
 			const c = interpolation.controlPoints;
-			t = new import_unitbezier.default(c[0], c[1], c[2], c[3]).solve(exponentialInterpolation(input, 1, lower, upper));
+			t = unitBezier(c[0], c[1], c[2], c[3])(exponentialInterpolation(input, 1, lower, upper));
 		}
 		return t;
 	}
@@ -7384,7 +7369,7 @@ var GlobalState = class GlobalState {
 	evaluate(ctx) {
 		const globalState = ctx.globals?.globalState;
 		if (!globalState || Object.keys(globalState).length === 0) return null;
-		return getOwn(globalState, this.key);
+		return getOwn(globalState, this.key) ?? null;
 	}
 	eachChild() {}
 	outputDefined() {
@@ -8463,20 +8448,123 @@ function isExpressionFilter(filter) {
 		case "has": return filter.length >= 2 && filter[1] !== "$id" && filter[1] !== "$type";
 		case "in": return filter.length >= 3 && (typeof filter[1] !== "string" || Array.isArray(filter[2]));
 		case "!in":
-		case "!has":
-		case "none": return false;
+		case "!has": return false;
 		case "==":
 		case "!=":
 		case ">":
 		case ">=":
 		case "<":
 		case "<=": return filter.length !== 3 || Array.isArray(filter[1]) || Array.isArray(filter[2]);
+		case "none":
+			for (const f of filter.slice(1)) {
+				if (typeof f === "boolean") continue;
+				if (isExpressionFilter(f)) return true;
+			}
+			return false;
 		case "any":
-		case "all":
-			for (const f of filter.slice(1)) if (!isExpressionFilter(f) && typeof f !== "boolean") return false;
-			return true;
+		case "all": {
+			let hasLegacy = false;
+			for (const f of filter.slice(1)) {
+				if (typeof f === "boolean") continue;
+				if (isExpressionFilter(f)) return true;
+				hasLegacy = true;
+			}
+			return !hasLegacy;
+		}
 		default: return true;
 	}
+}
+function getFilterPropertyExpression(property) {
+	if (property === "$id") return ["id"];
+	return ["get", property];
+}
+function getLegacyFilterExpressionSuggestion(filter) {
+	switch (filter[0]) {
+		case "==":
+		case "!=":
+		case "<":
+		case "<=":
+		case ">":
+		case ">=":
+			if (filter.length !== 3 || typeof filter[1] !== "string") return null;
+			if (filter[1] === "$type") return [filter[0], [
+				"in",
+				["geometry-type"],
+				["literal", [filter[2], `Multi${filter[2]}`]]
+			]];
+			return [
+				filter[0],
+				getFilterPropertyExpression(filter[1]),
+				filter[2]
+			];
+		case "in":
+		case "!in": {
+			if (filter.length < 2 || typeof filter[1] !== "string") return null;
+			let expression = [
+				"in",
+				getFilterPropertyExpression(filter[1]),
+				["literal", filter.slice(2)]
+			];
+			if (filter[1] === "$type") expression = [
+				"in",
+				["geometry-type"],
+				["literal", filter.slice(2).map((g) => [g, `Multi${g}`]).flat()]
+			];
+			return filter[0] === "!in" ? ["!", expression] : expression;
+		}
+		case "has":
+		case "!has": {
+			if (filter.length !== 2 || typeof filter[1] !== "string") return null;
+			if (filter[1] === "$type" || filter[1] === "$id") return null;
+			const expression = ["has", filter[1]];
+			return filter[0] === "!has" ? ["!", expression] : expression;
+		}
+		default: return null;
+	}
+}
+function getMixedFilterErrorMessage(filter) {
+	if ((filter[0] === "<" || filter[0] === "<=" || filter[0] === ">" || filter[0] === ">=") && filter[1] === "$type") return `"$type" cannot be use with operator "${filter[0]}"`;
+	const suggestion = getLegacyFilterExpressionSuggestion(filter);
+	if (suggestion) return `Mixing deprecated filter syntax with expression syntax is not supported. Replace ${JSON.stringify(filter)} with ${JSON.stringify(suggestion)}.`;
+	return `Mixing deprecated filter syntax with expression syntax is not supported. Convert ${JSON.stringify(filter)} to expression syntax.`;
+}
+function checkChild(index, path, filter) {
+	const child = filter[index];
+	if (!Array.isArray(child)) return null;
+	if (!isExpressionFilter(child)) return {
+		path: path.concat(index),
+		legacyFilter: child
+	};
+	return findMixedLegacyFilter(child, path.concat(index));
+}
+function findMixedLegacyFilter(filter, path = []) {
+	if (!Array.isArray(filter) || filter.length < 1) return null;
+	switch (filter[0]) {
+		case "all":
+		case "any":
+		case "none":
+			for (let i = 1; i < filter.length; i++) {
+				const diagnostic = checkChild(i, path, filter);
+				if (diagnostic) return diagnostic;
+			}
+			break;
+		case "!": {
+			const diagnostic = checkChild(1, path, filter);
+			if (diagnostic) return diagnostic;
+			break;
+		}
+		case "case":
+			for (let i = 1; i < filter.length - 1; i += 2) {
+				const diagnostic = checkChild(i, path, filter);
+				if (diagnostic) return diagnostic;
+			}
+			break;
+	}
+	return null;
+}
+function validateNoMixedExpressionFilter(filter) {
+	const diagnostic = findMixedLegacyFilter(filter);
+	if (diagnostic) throw new Error(getMixedFilterErrorMessage(diagnostic.legacyFilter));
 }
 const filterSpec = {
 	type: "boolean",
@@ -8504,7 +8592,11 @@ function featureFilter(filter, globalState) {
 		needGeometry: false,
 		getGlobalStateRefs: () => /* @__PURE__ */ new Set()
 	};
-	if (!isExpressionFilter(filter)) filter = convertFilter$1(filter);
+	if (Array.isArray(filter) && filter[0] === "none" && isExpressionFilter(filter)) {
+		validateNoMixedExpressionFilter(filter);
+		filter = convertFilter$1(filter);
+	} else if (!isExpressionFilter(filter)) filter = convertFilter$1(filter);
+	else validateNoMixedExpressionFilter(filter);
 	const compiled = createExpression(filter, filterSpec, globalState);
 	if (compiled.result === "error") throw new Error(compiled.value.map((err) => `${err.key}: ${err.message}`).join(", "));
 	else return {
@@ -8878,12 +8970,20 @@ function validateEnum(options) {
 	} else if (Object.keys(valueSpec.values).indexOf(unbundle(value)) === -1) errors.push(new ValidationError(key, value, `expected one of [${Object.keys(valueSpec.values).join(", ")}], ${JSON.stringify(value)} found`));
 	return errors;
 }
+function getValueAtPath(value, path) {
+	let current = value;
+	for (const index of path) current = current[index];
+	return current;
+}
 function validateFilter$1(options) {
-	if (isExpressionFilter(deepUnbundle(options.value))) return validateExpression(extendBy({}, options, {
+	const value = deepUnbundle(options.value);
+	if (!isExpressionFilter(value)) return validateNonExpressionFilter(options);
+	const mixedLegacyDiagnostic = findMixedLegacyFilter(value);
+	if (mixedLegacyDiagnostic) return [new ValidationError(`${options.key}${mixedLegacyDiagnostic.path.map((index) => `[${index}]`).join("")}`, getValueAtPath(options.value, mixedLegacyDiagnostic.path), getMixedFilterErrorMessage(mixedLegacyDiagnostic.legacyFilter))];
+	return validateExpression(extendBy({}, options, {
 		expressionContext: "filter",
 		valueSpec: { value: "boolean" }
 	}));
-	else return validateNonExpressionFilter(options);
 }
 function validateNonExpressionFilter(options) {
 	const value = options.value;
@@ -9709,36 +9809,6 @@ function createVisibility(visibility, globalState) {
 	return new VisibilityExpressionClass(visibility, globalState);
 }
 //#endregion
-//#region src/util/abort_error.ts
-/**
-* An error message to use when an operation is aborted
-*/
-const ABORT_ERROR = "AbortError";
-var AbortError = class extends Error {
-	constructor(messageOrError = ABORT_ERROR) {
-		super(messageOrError instanceof Error ? messageOrError.message : messageOrError);
-		this.name = ABORT_ERROR;
-		if (messageOrError instanceof Error && messageOrError.stack) this.stack = messageOrError.stack;
-	}
-};
-/**
-* Check if an error is an abort error
-* @param error - An error object
-* @returns - true if the error is an abort error
-*/
-function isAbortError(error) {
-	return error instanceof Error && error.name === "AbortError";
-}
-/**
-* Throws an AbortError if the provided abort signal has already been aborted.
-*
-* @param signal - The abort signal to check.
-* @throws AbortError If the signal is aborted.
-*/
-function throwIfAborted(signal) {
-	if (signal.aborted) throw new AbortError(signal.reason);
-}
-//#endregion
 //#region src/util/config.ts
 const config = {
 	MAX_PARALLEL_IMAGE_REQUESTS: 16,
@@ -9827,8 +9897,16 @@ var AJAXError = class extends Error {
 * For files loaded from the local file system, `location.origin` will be set
 * to the string(!) "null" (Firefox), or "file://" (Chrome, Safari, Edge),
 * and we will set an empty referrer. Otherwise, we're using the document's URL.
+* If we're on a blob URL and parent window is cross-origin, parent.location throws
+* SecurityError DOMException, this means we are probably not in blob URL worker bundle.
 */
-const getReferrer = () => isWorker(self) ? self.worker?.referrer : (window.location.protocol === "blob:" ? window.parent : window).location.href;
+function getReferrer() {
+	if (isWorker(self)) return self.worker?.referrer;
+	if (window.location.protocol === "blob:") try {
+		return window.parent.location.href;
+	} catch {}
+	return window.location.href;
+}
 /**
 * Determines whether a URL is a file:// URL. This is obviously the case if it begins
 * with file://. Relative URLs are also file:// URLs iff the original document was loaded
@@ -10046,6 +10124,7 @@ function serialize(input, transferables) {
 			if (!input.hasOwnProperty(key)) continue;
 			if (registry[classRegistryKey].omit.includes(key)) continue;
 			const property = input[key];
+			if (property === void 0) continue;
 			properties[key] = registry[classRegistryKey].shallow.includes(key) ? property : serialize(property, transferables);
 		}
 		if (input instanceof Error) properties.message = input.message;
@@ -10150,6 +10229,7 @@ var Actor = class {
 					sourceMapId: this.mapId
 				};
 				this.target.postMessage(cancelMessage);
+				reject(new AbortError(abortController.signal.reason));
 			}, addEventDefaultOptions) : null;
 			this.resolveRejects[id] = {
 				resolve: (value) => {
@@ -10313,15 +10393,6 @@ var Evented = class {
 		_removeEventListener(type, listener, this._oneTimeListeners);
 		return this;
 	}
-	/**
-	* Adds a listener that will be called only once to a specified event type.
-	*
-	* The listener will be called first time the event fires after the listener is registered.
-	*
-	* @param type - The event type to listen for.
-	* @param listener - The function to be called when the event is fired the first time.
-	* @returns `this` or a promise if a listener is not provided
-	*/
 	once(type, listener) {
 		if (!listener) return new Promise((resolve) => this.once(type, resolve));
 		this._oneTimeListeners ||= {};
@@ -11200,7 +11271,7 @@ var StyleLayer = class extends Evented {
 			return;
 		}
 		if (this._transitionablePaint?.hasProperty(name)) {
-			this.fire(new ErrorEvent(new Error(name + ERROR_PAINT_NOT_LAYOUT)));
+			this.fire(new ErrorEvent(/* @__PURE__ */ new Error(name + ERROR_PAINT_NOT_LAYOUT)));
 			return;
 		}
 		if (value !== null && value !== void 0 && this._validate(validateLayoutProperty, `layers.${this.id}.layout.${name}`, name, value, options)) return;
@@ -11218,7 +11289,7 @@ var StyleLayer = class extends Evented {
 	}
 	setPaintProperty(name, value, options = {}) {
 		if (name === "visibility" || this._unevaluatedLayout?.hasProperty(name)) {
-			this.fire(new ErrorEvent(new Error(name + ERROR_LAYOUT_NOT_PAINT)));
+			this.fire(new ErrorEvent(/* @__PURE__ */ new Error(name + ERROR_LAYOUT_NOT_PAINT)));
 			return false;
 		}
 		if (value !== null && value !== void 0 && this._validate(validatePaintProperty, `layers.${this.id}.paint.${name}`, name, value, options)) return false;
@@ -12665,7 +12736,7 @@ const dashAttributes = createLayout([{
 }]);
 //#endregion
 //#region node_modules/murmurhash-js/murmurhash3_gc.js
-var require_murmurhash3_gc = /* @__PURE__ */ __commonJSMin$1(((exports, module) => {
+var require_murmurhash3_gc = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
 	* JS Implementation of MurmurHash3 (r136) (as of May 20, 2011)
 	* 
@@ -12714,7 +12785,7 @@ var require_murmurhash3_gc = /* @__PURE__ */ __commonJSMin$1(((exports, module) 
 }));
 //#endregion
 //#region node_modules/murmurhash-js/murmurhash2_gc.js
-var require_murmurhash2_gc = /* @__PURE__ */ __commonJSMin$1(((exports, module) => {
+var require_murmurhash2_gc = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
 	* JS Implementation of MurmurHash2
 	* 
@@ -12754,7 +12825,7 @@ var require_murmurhash2_gc = /* @__PURE__ */ __commonJSMin$1(((exports, module) 
 }));
 //#endregion
 //#region src/data/feature_position_map.ts
-var import_murmurhash_js = /* @__PURE__ */ __toESM$1((/* @__PURE__ */ __commonJSMin$1(((exports, module) => {
+var import_murmurhash_js = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var murmur3 = require_murmurhash3_gc();
 	var murmur2 = require_murmurhash2_gc();
 	module.exports = murmur3;
@@ -13085,8 +13156,8 @@ var CrossFadedBinder = class {
 		const max = positions[positionIds.max];
 		if (!min || !mid || !max) return;
 		for (let i = start; i < end; i++) {
-			this.emplace(this.zoomInPaintVertexArray, i, mid, min);
-			this.emplace(this.zoomOutPaintVertexArray, i, mid, max);
+			this.emplace(this.zoomInPaintVertexArray, i, min, mid);
+			this.emplace(this.zoomOutPaintVertexArray, i, max, mid);
 		}
 	}
 	upload(context) {
@@ -13111,8 +13182,8 @@ var CrossFadedPatternBinder = class extends CrossFadedBinder {
 	getVertexAttributes() {
 		return patternAttributes.members;
 	}
-	emplace(array, index, midPos, minMaxPos) {
-		array.emplace(index, midPos.tlbr[0], midPos.tlbr[1], midPos.tlbr[2], midPos.tlbr[3], minMaxPos.tlbr[0], minMaxPos.tlbr[1], minMaxPos.tlbr[2], minMaxPos.tlbr[3], midPos.pixelRatio, minMaxPos.pixelRatio);
+	emplace(array, index, fromPos, toPos) {
+		array.emplace(index, fromPos.tlbr[0], fromPos.tlbr[1], fromPos.tlbr[2], fromPos.tlbr[3], toPos.tlbr[0], toPos.tlbr[1], toPos.tlbr[2], toPos.tlbr[3], fromPos.pixelRatio, toPos.pixelRatio);
 	}
 };
 var CrossFadedDasharrayBinder = class extends CrossFadedBinder {
@@ -13125,8 +13196,8 @@ var CrossFadedDasharrayBinder = class extends CrossFadedBinder {
 	getVertexAttributes() {
 		return dashAttributes.members;
 	}
-	emplace(array, index, midPos, minMaxPos) {
-		array.emplace(index, 0, midPos.y, midPos.height, midPos.width, 0, minMaxPos.y, minMaxPos.height, minMaxPos.width);
+	emplace(array, index, fromPos, toPos) {
+		array.emplace(index, 0, fromPos.y, fromPos.height, fromPos.width, 0, toPos.y, toPos.height, toPos.width);
 	}
 };
 /**
@@ -13136,8 +13207,8 @@ var CrossFadedDasharrayBinder = class extends CrossFadedBinder {
 *
 * Non-data-driven property values are bound to shader uniforms. Data-driven property
 * values are bound to vertex attributes. In order to support a uniform GLSL syntax over
-* both, [Mapbox GL Shaders](https://github.com/mapbox/mapbox-gl-shaders) defines a `#pragma`
-* abstraction, which ProgramConfiguration is responsible for implementing. At runtime,
+* both, the [shaders](../shaders/README.md) define a `#pragma` abstraction, which
+* ProgramConfiguration is responsible for implementing. At runtime,
 * it examines the attributes of a particular layer, combines this with fixed knowledge
 * about how layers of the particular type are implemented, and determines which uniforms
 * and vertex attributes will be required. It can then substitute the appropriate text
@@ -14253,7 +14324,10 @@ var Texture = class {
 * surrounding pixel values to compute the slope at that pixel, and we cannot accurately calculate the slope at pixels on a
 * tile's edge without backfilling from neighboring tiles.
 */
-var DEMData = class {
+var DEMData = class DEMData {
+	static {
+		this.byteViewCache = /* @__PURE__ */ new WeakMap();
+	}
 	/**
 	* Constructs a `DEMData` object
 	* @param uid - the tile's unique id
@@ -14279,6 +14353,7 @@ var DEMData = class {
 		this.stride = data.height;
 		const dim = this.dim = data.height - 2;
 		this.data = new Uint32Array(data.data.buffer);
+		DEMData.byteViewCache.set(this, new Uint8Array(this.data.buffer));
 		switch (encoding) {
 			case "terrarium":
 				this.redFactor = 256;
@@ -14309,18 +14384,35 @@ var DEMData = class {
 		this.data[this._idx(dim, -1)] = this.data[this._idx(dim - 1, 0)];
 		this.data[this._idx(-1, dim)] = this.data[this._idx(0, dim - 1)];
 		this.data[this._idx(dim, dim)] = this.data[this._idx(dim - 1, dim - 1)];
+		const pixels = this._getByteView();
 		this.min = Number.MAX_SAFE_INTEGER;
 		this.max = Number.MIN_SAFE_INTEGER;
 		for (let x = 0; x < dim; x++) for (let y = 0; y < dim; y++) {
-			const ele = this.get(x, y);
+			const index = this._idx(x, y) * 4;
+			const ele = this._unpackAtIndex(pixels, index);
 			if (ele > this.max) this.max = ele;
 			if (ele < this.min) this.min = ele;
 		}
 	}
 	get(x, y) {
-		const pixels = new Uint8Array(this.data.buffer);
+		const pixels = this._getByteView();
 		const index = this._idx(x, y) * 4;
-		return this.unpack(pixels[index], pixels[index + 1], pixels[index + 2]);
+		return this._unpackAtIndex(pixels, index);
+	}
+	sampleBilinear(x, y) {
+		const cx = Math.floor(x);
+		const cy = Math.floor(y);
+		if (cx < -1 || cx >= this.dim || cy < -1 || cy >= this.dim) throw new RangeError(`Out of range source coordinates for DEM data. x: ${x}, y: ${y}, dim: ${this.dim}`);
+		const pixels = this._getByteView();
+		const index = ((cy + 1) * this.stride + cx + 1) * 4;
+		const strideByteWidth = this.stride * 4;
+		const tx = x - cx;
+		const ty = y - cy;
+		const z00 = this._unpackAtIndex(pixels, index);
+		const z10 = this._unpackAtIndex(pixels, index + 4);
+		const z01 = this._unpackAtIndex(pixels, index + strideByteWidth);
+		const z11 = this._unpackAtIndex(pixels, index + strideByteWidth + 4);
+		return z00 * (1 - tx) * (1 - ty) + z10 * tx * (1 - ty) + z01 * (1 - tx) * ty + z11 * tx * ty;
 	}
 	getUnpackVector() {
 		return [
@@ -14344,7 +14436,7 @@ var DEMData = class {
 		return new RGBAImage({
 			width: this.stride,
 			height: this.stride
-		}, new Uint8Array(this.data.buffer));
+		}, this._getByteView());
 	}
 	backfillBorder(borderTile, dx, dy) {
 		if (this.dim !== borderTile.dim) throw new Error("dem dimension mismatch");
@@ -14368,6 +14460,17 @@ var DEMData = class {
 		const ox = -dx * this.dim;
 		const oy = -dy * this.dim;
 		for (let y = yMin; y < yMax; y++) for (let x = xMin; x < xMax; x++) this.data[this._idx(x, y)] = borderTile.data[this._idx(x + ox, y + oy)];
+	}
+	_getByteView() {
+		let byteView = DEMData.byteViewCache.get(this);
+		if (byteView?.buffer !== this.data.buffer) {
+			byteView = new Uint8Array(this.data.buffer);
+			DEMData.byteViewCache.set(this, byteView);
+		}
+		return byteView;
+	}
+	_unpackAtIndex(pixels, index) {
+		return this.unpack(pixels[index], pixels[index + 1], pixels[index + 2]);
 	}
 };
 function packDEMData(v, unpackVector) {
@@ -15186,7 +15289,7 @@ var Subdivider = class {
 		const flattened = this._vertexBuffer;
 		for (let i = 0; i < flattened.length; i += 2) {
 			const vy = flattened[i + 1];
-			if (vy === -32768) flattened[i + 1] = NORTH_POLE_Y + 1;
+			if (vy === -32768) flattened[i + 1] = -32767;
 			if (vy === 32767) flattened[i + 1] = SOUTH_POLE_Y - 1;
 		}
 	}
@@ -15775,6 +15878,7 @@ let paint$5;
 const getPaint$5 = () => paint$5 = paint$5 || new Properties({
 	"fill-antialias": new DataConstantProperty(latest_default["paint_fill"]["fill-antialias"]),
 	"fill-opacity": new DataDrivenProperty(latest_default["paint_fill"]["fill-opacity"]),
+	"fill-layer-opacity": new DataConstantProperty(latest_default["paint_fill"]["fill-layer-opacity"]),
 	"fill-color": new DataDrivenProperty(latest_default["paint_fill"]["fill-color"]),
 	"fill-outline-color": new DataDrivenProperty(latest_default["paint_fill"]["fill-outline-color"]),
 	"fill-translate": new DataConstantProperty(latest_default["paint_fill"]["fill-translate"]),
@@ -15834,11 +15938,11 @@ layout$2.size;
 layout$2.alignment;
 //#endregion
 //#region node_modules/@mapbox/vector-tile/index.js
-/** @import Pbf from 'pbf' */
+/** @import {PbfReader} from 'pbf' */
 /** @import {Feature} from 'geojson' */
 var VectorTileFeature = class {
 	/**
-	* @param {Pbf} pbf
+	* @param {PbfReader} pbf
 	* @param {number} end
 	* @param {number} extent
 	* @param {string[]} keys
@@ -15846,7 +15950,7 @@ var VectorTileFeature = class {
 	*/
 	constructor(pbf, end, extent, keys, values) {
 		/** @type {Record<string, number | string | boolean>} */
-		this.properties = {};
+		this.properties = Object.create(null);
 		this.extent = extent;
 		/** @type {0 | 1 | 2 | 3} */
 		this.type = 0;
@@ -15860,9 +15964,25 @@ var VectorTileFeature = class {
 		this._keys = keys;
 		/** @private */
 		this._values = values;
-		pbf.readFields(readFeature, this, end);
+		while (pbf.pos < end) {
+			const tag = pbf.readVarint();
+			if (tag === 8) this.id = pbf.readVarint();
+			else if (tag === 18) {
+				const tagsEnd = pbf.readVarint() + pbf.pos;
+				while (pbf.pos < tagsEnd) {
+					const key = keys[pbf.readVarint()];
+					const value = values[pbf.readVarint()];
+					this.properties[key] = value;
+				}
+			} else if (tag === 24) this.type = pbf.readVarint();
+			else if (tag === 34) {
+				this._geometry = pbf.pos;
+				pbf.skip(tag);
+			} else pbf.skip(tag);
+		}
 	}
 	loadGeometry() {
+		if (this._geometry < 0) throw new Error("feature has no geometry");
 		const pbf = this._pbf;
 		pbf.pos = this._geometry;
 		const end = pbf.readVarint() + pbf.pos;
@@ -15879,15 +15999,17 @@ var VectorTileFeature = class {
 				const cmdLen = pbf.readVarint();
 				cmd = cmdLen & 7;
 				length = cmdLen >> 3;
+				if (length === 0) continue;
 			}
 			length--;
-			if (cmd === 1 || cmd === 2) {
+			if (cmd === 1) {
 				x += pbf.readSVarint();
 				y += pbf.readSVarint();
-				if (cmd === 1) {
-					if (line) lines.push(line);
-					line = [];
-				}
+				if (line) lines.push(line);
+				line = [new Point(x, y)];
+			} else if (cmd === 2) {
+				x += pbf.readSVarint();
+				y += pbf.readSVarint();
 				if (line) line.push(new Point(x, y));
 			} else if (cmd === 7) {
 				if (line) line.push(line[0].clone());
@@ -15897,6 +16019,7 @@ var VectorTileFeature = class {
 		return lines;
 	}
 	bbox() {
+		if (this._geometry < 0) throw new Error("feature has no geometry");
 		const pbf = this._pbf;
 		pbf.pos = this._geometry;
 		const end = pbf.readVarint() + pbf.pos;
@@ -15906,6 +16029,7 @@ var VectorTileFeature = class {
 				const cmdLen = pbf.readVarint();
 				cmd = cmdLen & 7;
 				length = cmdLen >> 3;
+				if (length === 0) continue;
 			}
 			length--;
 			if (cmd === 1 || cmd === 2) {
@@ -15991,29 +16115,6 @@ VectorTileFeature.types = [
 	"LineString",
 	"Polygon"
 ];
-/**
-* @param {number} tag
-* @param {VectorTileFeature} feature
-* @param {Pbf} pbf
-*/
-function readFeature(tag, feature, pbf) {
-	if (tag === 1) feature.id = pbf.readVarint();
-	else if (tag === 2) readTag(pbf, feature);
-	else if (tag === 3) feature.type = pbf.readVarint();
-	else if (tag === 4) feature._geometry = pbf.pos;
-}
-/**
-* @param {Pbf} pbf
-* @param {VectorTileFeature} feature
-*/
-function readTag(pbf, feature) {
-	const end = pbf.readVarint() + pbf.pos;
-	while (pbf.pos < end) {
-		const key = feature._keys[pbf.readVarint()];
-		const value = feature._values[pbf.readVarint()];
-		feature.properties[key] = value;
-	}
-}
 /** classifies an array of rings into polygons with outer rings and holes
 * @param {Point[][]} rings
 */
@@ -16046,7 +16147,7 @@ function signedArea(ring) {
 }
 var VectorTileLayer = class {
 	/**
-	* @param {Pbf} pbf
+	* @param {PbfReader} pbf
 	* @param {number} [end]
 	*/
 	constructor(pbf, end) {
@@ -16065,7 +16166,19 @@ var VectorTileLayer = class {
 		/** @private
 		* @type {number[]} */
 		this._features = [];
-		pbf.readFields(readLayer, this, end);
+		if (end === void 0) end = pbf.length;
+		while (pbf.pos < end) {
+			const tag = pbf.readVarint();
+			if (tag === 10) this.name = pbf.readString();
+			else if (tag === 18) {
+				this._features.push(pbf.pos);
+				pbf.skip(tag);
+			} else if (tag === 26) this._keys.push(pbf.readString());
+			else if (tag === 34) this._values.push(readValueMessage(pbf));
+			else if (tag === 40) this.extent = pbf.readVarint();
+			else if (tag === 120) this.version = pbf.readVarint();
+			else pbf.skip(tag);
+		}
 		this.length = this._features.length;
 	}
 	/** return feature `i` from this layer as a `VectorTileFeature`
@@ -16079,52 +16192,36 @@ var VectorTileLayer = class {
 	}
 };
 /**
-* @param {number} tag
-* @param {VectorTileLayer} layer
-* @param {Pbf} pbf
-*/
-function readLayer(tag, layer, pbf) {
-	if (tag === 15) layer.version = pbf.readVarint();
-	else if (tag === 1) layer.name = pbf.readString();
-	else if (tag === 5) layer.extent = pbf.readVarint();
-	else if (tag === 2) layer._features.push(pbf.pos);
-	else if (tag === 3) layer._keys.push(pbf.readString());
-	else if (tag === 4) layer._values.push(readValueMessage(pbf));
-}
-/**
-* @param {Pbf} pbf
+* @param {PbfReader} pbf
 */
 function readValueMessage(pbf) {
 	let value = null;
 	const end = pbf.readVarint() + pbf.pos;
 	while (pbf.pos < end) {
-		const tag = pbf.readVarint() >> 3;
-		value = tag === 1 ? pbf.readString() : tag === 2 ? pbf.readFloat() : tag === 3 ? pbf.readDouble() : tag === 4 ? pbf.readVarint64() : tag === 5 ? pbf.readVarint() : tag === 6 ? pbf.readSVarint() : tag === 7 ? pbf.readBoolean() : null;
+		const tag = pbf.readVarint();
+		value = tag === 10 ? pbf.readString() : tag === 21 ? pbf.readFloat() : tag === 25 ? pbf.readDouble() : tag === 32 ? pbf.readVarint(true) : tag === 40 ? pbf.readVarint() : tag === 48 ? pbf.readSVarint() : tag === 56 ? pbf.readBoolean() : (pbf.skip(tag), null);
 	}
 	if (value == null) throw new Error("unknown feature value");
 	return value;
 }
 var VectorTile = class {
 	/**
-	* @param {Pbf} pbf
+	* @param {PbfReader} pbf
 	* @param {number} [end]
 	*/
-	constructor(pbf, end) {
+	constructor(pbf, end = pbf.length) {
 		/** @type {Record<string, VectorTileLayer>} */
-		this.layers = pbf.readFields(readTile, {}, end);
+		const layers = Object.create(null);
+		while (pbf.pos < end) {
+			const tag = pbf.readVarint();
+			if (tag === 26) {
+				const layer = new VectorTileLayer(pbf, pbf.readVarint() + pbf.pos);
+				if (layer.length) layers[layer.name] = layer;
+			} else pbf.skip(tag);
+		}
+		this.layers = layers;
 	}
 };
-/**
-* @param {number} tag
-* @param {Record<string, VectorTileLayer>} layers
-* @param {Pbf} pbf
-*/
-function readTile(tag, layers, pbf) {
-	if (tag === 3) {
-		const layer = new VectorTileLayer(pbf, pbf.readVarint() + pbf.pos);
-		if (layer.length) layers[layer.name] = layer;
-	}
-}
 //#endregion
 //#region src/data/bucket/fill_extrusion_bucket.ts
 const EARCUT_MAX_RINGS = 500;
@@ -16460,15 +16557,17 @@ const ARRAY_TYPES = [
 	Float64Array
 ];
 /** @typedef {Int8ArrayConstructor | Uint8ArrayConstructor | Uint8ClampedArrayConstructor | Int16ArrayConstructor | Uint16ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor} TypedArrayConstructor */
+/** @typedef {Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array} TypedArray */
 const VERSION = 1;
 const HEADER_SIZE = 8;
+const STACK = /* @__PURE__ */ new Uint32Array(96);
 var KDBush = class KDBush {
 	/**
 	* Creates an index from raw `ArrayBuffer` data.
-	* @param {ArrayBuffer} data
+	* @param {ArrayBufferLike} data
 	*/
 	static from(data) {
-		if (!(data instanceof ArrayBuffer)) throw new Error("Data must be an instance of ArrayBuffer.");
+		if (!data || data.byteLength === void 0 || data.buffer) throw new Error("Data must be an instance of ArrayBuffer or SharedArrayBuffer.");
 		const [magic, versionAndType] = new Uint8Array(data, 0, 2);
 		if (magic !== 219) throw new Error("Data does not appear to be in a KDBush format.");
 		const version = versionAndType >> 4;
@@ -16477,17 +16576,18 @@ var KDBush = class KDBush {
 		if (!ArrayType) throw new Error("Unrecognized array type.");
 		const [nodeSize] = new Uint16Array(data, 2, 1);
 		const [numItems] = new Uint32Array(data, 4, 1);
-		return new KDBush(numItems, nodeSize, ArrayType, data);
+		return new KDBush(numItems, nodeSize, ArrayType, void 0, data);
 	}
 	/**
 	* Creates an index that will hold a given number of items.
 	* @param {number} numItems
 	* @param {number} [nodeSize=64] Size of the KD-tree node (64 by default).
 	* @param {TypedArrayConstructor} [ArrayType=Float64Array] The array type used for coordinates storage (`Float64Array` by default).
-	* @param {ArrayBuffer} [data] (For internal use only)
+	* @param {ArrayBufferConstructor | SharedArrayBufferConstructor} [ArrayBufferType=ArrayBuffer] The array buffer type used for storage (`ArrayBuffer` by default).
+	* @param {ArrayBufferLike} [data] (For internal use only)
 	*/
-	constructor(numItems, nodeSize = 64, ArrayType = Float64Array, data) {
-		if (isNaN(numItems) || numItems < 0) throw new Error(`Unpexpected numItems value: ${numItems}.`);
+	constructor(numItems, nodeSize = 64, ArrayType = Float64Array, ArrayBufferType = ArrayBuffer, data) {
+		if (isNaN(numItems) || numItems < 0) throw new Error(`Unexpected numItems value: ${numItems}.`);
 		this.numItems = +numItems;
 		this.nodeSize = Math.min(Math.max(+nodeSize, 2), 65535);
 		this.ArrayType = ArrayType;
@@ -16497,21 +16597,21 @@ var KDBush = class KDBush {
 		const idsByteSize = numItems * this.IndexArrayType.BYTES_PER_ELEMENT;
 		const padCoords = (8 - idsByteSize % 8) % 8;
 		if (arrayTypeIndex < 0) throw new Error(`Unexpected typed array class: ${ArrayType}.`);
-		if (data && data instanceof ArrayBuffer) {
+		if (data) {
 			this.data = data;
-			this.ids = new this.IndexArrayType(this.data, HEADER_SIZE, numItems);
-			this.coords = new this.ArrayType(this.data, HEADER_SIZE + idsByteSize + padCoords, numItems * 2);
+			this.ids = new this.IndexArrayType(data, HEADER_SIZE, numItems);
+			this.coords = new ArrayType(data, HEADER_SIZE + idsByteSize + padCoords, numItems * 2);
 			this._pos = numItems * 2;
 			this._finished = true;
 		} else {
-			this.data = new ArrayBuffer(HEADER_SIZE + coordsByteSize + idsByteSize + padCoords);
-			this.ids = new this.IndexArrayType(this.data, HEADER_SIZE, numItems);
-			this.coords = new this.ArrayType(this.data, HEADER_SIZE + idsByteSize + padCoords, numItems * 2);
+			const data = this.data = new ArrayBufferType(HEADER_SIZE + coordsByteSize + idsByteSize + padCoords);
+			this.ids = new this.IndexArrayType(data, HEADER_SIZE, numItems);
+			this.coords = new ArrayType(data, HEADER_SIZE + idsByteSize + padCoords, numItems * 2);
 			this._pos = 0;
 			this._finished = false;
-			new Uint8Array(this.data, 0, 2).set([219, (VERSION << 4) + arrayTypeIndex]);
-			new Uint16Array(this.data, 2, 1)[0] = nodeSize;
-			new Uint32Array(this.data, 4, 1)[0] = numItems;
+			new Uint8Array(data, 0, 2).set([219, (VERSION << 4) + arrayTypeIndex]);
+			new Uint16Array(data, 2, 1)[0] = nodeSize;
+			new Uint32Array(data, 4, 1)[0] = numItems;
 		}
 	}
 	/**
@@ -16548,16 +16648,15 @@ var KDBush = class KDBush {
 	range(minX, minY, maxX, maxY) {
 		if (!this._finished) throw new Error("Data not yet indexed - call index.finish().");
 		const { ids, coords, nodeSize } = this;
-		const stack = [
-			0,
-			ids.length - 1,
-			0
-		];
+		STACK[0] = 0;
+		STACK[1] = ids.length - 1;
+		STACK[2] = 0;
+		let sp = 3;
 		const result = [];
-		while (stack.length) {
-			const axis = stack.pop() || 0;
-			const right = stack.pop() || 0;
-			const left = stack.pop() || 0;
+		while (sp > 0) {
+			const axis = STACK[--sp];
+			const right = STACK[--sp];
+			const left = STACK[--sp];
 			if (right - left <= nodeSize) {
 				for (let i = left; i <= right; i++) {
 					const x = coords[2 * i];
@@ -16571,14 +16670,14 @@ var KDBush = class KDBush {
 			const y = coords[2 * m + 1];
 			if (x >= minX && x <= maxX && y >= minY && y <= maxY) result.push(ids[m]);
 			if (axis === 0 ? minX <= x : minY <= y) {
-				stack.push(left);
-				stack.push(m - 1);
-				stack.push(1 - axis);
+				STACK[sp++] = left;
+				STACK[sp++] = m - 1;
+				STACK[sp++] = 1 - axis;
 			}
 			if (axis === 0 ? maxX >= x : maxY >= y) {
-				stack.push(m + 1);
-				stack.push(right);
-				stack.push(1 - axis);
+				STACK[sp++] = m + 1;
+				STACK[sp++] = right;
+				STACK[sp++] = 1 - axis;
 			}
 		}
 		return result;
@@ -16591,44 +16690,59 @@ var KDBush = class KDBush {
 	* @returns {number[]} An array of indices correponding to the found items.
 	*/
 	within(qx, qy, r) {
+		const result = [];
+		this.withinInto(qx, qy, r, result);
+		return result;
+	}
+	/**
+	* Search the index for items within a given radius, writing matching ids into `out`
+	* via indexed assignment (`out[i] = id`). Accepts any indexed-writable container —
+	* a typed array sized to the expected upper bound (allocation-free, fast) or a plain
+	* `Array` (which will grow as needed). Returns the number of matches written.
+	* @param {number} qx
+	* @param {number} qy
+	* @param {number} r Query radius.
+	* @param {number[] | TypedArray} out Container to write matching ids into.
+	* @returns {number} The number of matches written to `out`.
+	*/
+	withinInto(qx, qy, r, out) {
 		if (!this._finished) throw new Error("Data not yet indexed - call index.finish().");
 		const { ids, coords, nodeSize } = this;
-		const stack = [
-			0,
-			ids.length - 1,
-			0
-		];
-		const result = [];
+		STACK[0] = 0;
+		STACK[1] = ids.length - 1;
+		STACK[2] = 0;
+		let sp = 3;
+		let count = 0;
 		const r2 = r * r;
-		while (stack.length) {
-			const axis = stack.pop() || 0;
-			const right = stack.pop() || 0;
-			const left = stack.pop() || 0;
+		while (sp > 0) {
+			const axis = STACK[--sp];
+			const right = STACK[--sp];
+			const left = STACK[--sp];
 			if (right - left <= nodeSize) {
-				for (let i = left; i <= right; i++) if (sqDist(coords[2 * i], coords[2 * i + 1], qx, qy) <= r2) result.push(ids[i]);
+				for (let i = left; i <= right; i++) if (sqDist(coords[2 * i], coords[2 * i + 1], qx, qy) <= r2) out[count++] = ids[i];
 				continue;
 			}
 			const m = left + right >> 1;
 			const x = coords[2 * m];
 			const y = coords[2 * m + 1];
-			if (sqDist(x, y, qx, qy) <= r2) result.push(ids[m]);
+			if (sqDist(x, y, qx, qy) <= r2) out[count++] = ids[m];
 			if (axis === 0 ? qx - r <= x : qy - r <= y) {
-				stack.push(left);
-				stack.push(m - 1);
-				stack.push(1 - axis);
+				STACK[sp++] = left;
+				STACK[sp++] = m - 1;
+				STACK[sp++] = 1 - axis;
 			}
 			if (axis === 0 ? qx + r >= x : qy + r >= y) {
-				stack.push(m + 1);
-				stack.push(right);
-				stack.push(1 - axis);
+				STACK[sp++] = m + 1;
+				STACK[sp++] = right;
+				STACK[sp++] = 1 - axis;
 			}
 		}
-		return result;
+		return count;
 	}
 };
 /**
 * @param {Uint16Array | Uint32Array} ids
-* @param {InstanceType<TypedArrayConstructor>} coords
+* @param {TypedArray} coords
 * @param {number} nodeSize
 * @param {number} left
 * @param {number} right
@@ -16645,7 +16759,7 @@ function sort(ids, coords, nodeSize, left, right, axis) {
 * Custom Floyd-Rivest selection algorithm: sort ids and coords so that
 * [left..k-1] items are smaller than k-th item (on either x or y axis)
 * @param {Uint16Array | Uint32Array} ids
-* @param {InstanceType<TypedArrayConstructor>} coords
+* @param {TypedArray} coords
 * @param {number} k
 * @param {number} left
 * @param {number} right
@@ -16684,7 +16798,7 @@ function select(ids, coords, k, left, right, axis) {
 }
 /**
 * @param {Uint16Array | Uint32Array} ids
-* @param {InstanceType<TypedArrayConstructor>} coords
+* @param {TypedArray} coords
 * @param {number} i
 * @param {number} j
 */
@@ -16694,7 +16808,7 @@ function swapItem(ids, coords, i, j) {
 	swap(coords, 2 * i + 1, 2 * j + 1);
 }
 /**
-* @param {InstanceType<TypedArrayConstructor>} arr
+* @param {TypedArray} arr
 * @param {number} i
 * @param {number} j
 */
@@ -18699,6 +18813,7 @@ const getLayout$1 = () => layout$1 = layout$1 || new Properties({
 let paint$3;
 const getPaint$3 = () => paint$3 = paint$3 || new Properties({
 	"line-opacity": new DataDrivenProperty(latest_default["paint_line"]["line-opacity"]),
+	"line-layer-opacity": new DataConstantProperty(latest_default["paint_line"]["line-layer-opacity"]),
 	"line-color": new DataDrivenProperty(latest_default["paint_line"]["line-color"]),
 	"line-translate": new DataConstantProperty(latest_default["paint_line"]["line-translate"]),
 	"line-translate-anchor": new DataConstantProperty(latest_default["paint_line"]["line-translate-anchor"]),
@@ -18739,11 +18854,7 @@ let lineFloorwidthProperty;
 var LineStyleLayer = class extends StyleLayer {
 	constructor(layer, globalState) {
 		super(layer, line_style_layer_properties_g_default, globalState);
-		this.onRemove = () => {
-			this.resize();
-		};
 		this.gradientVersion = 0;
-		this.lineFbo = null;
 		if (!lineFloorwidthProperty) {
 			lineFloorwidthProperty = new LineFloorwidthProperty(line_style_layer_properties_g_default.paint.properties["line-width"].specification);
 			lineFloorwidthProperty.useIntegerZoom = true;
@@ -18782,14 +18893,6 @@ var LineStyleLayer = class extends StyleLayer {
 	}
 	isTileClipped() {
 		return true;
-	}
-	hasOffscreenPass() {
-		const constantOpacity = this.paint.get("line-opacity").constantOr(-1);
-		return constantOpacity > 0 && constantOpacity < 1 && !this.isHidden();
-	}
-	resize() {
-		this.lineFbo?.destroy();
-		this.lineFbo = null;
 	}
 };
 function getLineWidth(lineWidth, lineGapWidth) {
@@ -19404,7 +19507,7 @@ var TaggedString = class TaggedString {
 	/**
 	* Returns whether the text contains zero-width spaces.
 	*
-	* Some tilesets such as Mapbox Streets insert ZWSPs as hints for line
+	* Some tilesets such as Streets insert ZWSPs as hints for line
 	* breaking in CJK text.
 	*/
 	hasZeroWidthSpaces() {
@@ -19471,7 +19574,7 @@ var TaggedString = class TaggedString {
 		}
 		const nextImageSectionCharCode = this.getNextImageSectionCharCode();
 		if (!nextImageSectionCharCode) {
-			warnOnce(`Reached maximum number of images ${PUAend - PUAbegin + 2}`);
+			warnOnce(`Reached maximum number of images 6401`);
 			return;
 		}
 		this.text += String.fromCharCode(nextImageSectionCharCode);
@@ -19543,35 +19646,32 @@ const PBF_VARINT = 0;
 const PBF_FIXED64 = 1;
 const PBF_BYTES = 2;
 const PBF_FIXED32 = 5;
-var Pbf = class {
+var PbfReader = class {
 	/**
-	* @param {Uint8Array | ArrayBuffer} [buf]
+	* @param {Uint8Array | ArrayBuffer} buf
 	*/
-	constructor(buf = new Uint8Array(16)) {
+	constructor(buf) {
 		this.buf = ArrayBuffer.isView(buf) ? buf : new Uint8Array(buf);
 		this.dataView = new DataView(this.buf.buffer);
 		this.pos = 0;
 		this.type = 0;
+		this._valueStart = -1;
 		this.length = this.buf.length;
 	}
 	/**
 	* @template T
-	* @param {(tag: number, result: T, pbf: Pbf) => void} readField
+	* @param {(tag: number, result: T, pbf: PbfReader) => void} readField
 	* @param {T} result
 	* @param {number} [end]
 	*/
 	readFields(readField, result, end = this.length) {
-		while (this.pos < end) {
-			const val = this.readVarint(), tag = val >> 3, startPos = this.pos;
-			this.type = val & 7;
-			readField(tag, result, this);
-			if (this.pos === startPos) this.skip(val);
-		}
+		let field;
+		while (field = this.nextField(end)) readField(field, result, this);
 		return result;
 	}
 	/**
 	* @template T
-	* @param {(tag: number, result: T, pbf: Pbf) => void} readField
+	* @param {(tag: number, result: T, pbf: PbfReader) => void} readField
 	* @param {T} result
 	*/
 	readMessage(readField, result) {
@@ -19612,10 +19712,9 @@ var Pbf = class {
 	*/
 	readVarint(isSigned) {
 		const buf = this.buf;
-		let val, b;
-		b = buf[this.pos++];
-		val = b & 127;
-		if (b < 128) return val;
+		const b0 = buf[this.pos++];
+		if (b0 < 128) return b0;
+		let val = b0 & 127, b;
 		b = buf[this.pos++];
 		val |= (b & 127) << 7;
 		if (b < 128) return val;
@@ -19628,9 +19727,6 @@ var Pbf = class {
 		b = buf[this.pos];
 		val |= (b & 15) << 28;
 		return readVarintRemainder(val, isSigned, this);
-	}
-	readVarint64() {
-		return this.readVarint(true);
 	}
 	readSVarint() {
 		const num = this.readVarint();
@@ -19711,6 +19807,18 @@ var Pbf = class {
 	readPackedEnd() {
 		return this.type === PBF_BYTES ? this.readVarint() + this.pos : this.pos + 1;
 	}
+	/**
+	* Advance to the next field. Returns the field number, or 0 at end-of-message.
+	* @param {number} [end]
+	*/
+	nextField(end = this.length) {
+		if (this.pos === this._valueStart) this.skip(this.type);
+		if (this.pos >= end) return 0;
+		const tag = this.readVarint();
+		this.type = tag & 7;
+		this._valueStart = this.pos;
+		return tag >>> 3;
+	}
 	/** @param {number} val */
 	skip(val) {
 		const type = val & 7;
@@ -19719,6 +19827,17 @@ var Pbf = class {
 		else if (type === PBF_FIXED32) this.pos += 4;
 		else if (type === PBF_FIXED64) this.pos += 8;
 		else throw new Error(`Unimplemented type: ${type}`);
+	}
+};
+var PbfWriter = class {
+	/**
+	* @param {Uint8Array | ArrayBuffer} [buf]
+	*/
+	constructor(buf = /* @__PURE__ */ new Uint8Array(16)) {
+		this.buf = ArrayBuffer.isView(buf) ? buf : new Uint8Array(buf);
+		this.dataView = new DataView(this.buf.buffer);
+		this.pos = 0;
+		this.length = this.buf.length;
 	}
 	/**
 	* @param {number} tag
@@ -19773,6 +19892,11 @@ var Pbf = class {
 	/** @param {number} val */
 	writeVarint(val) {
 		val = +val || 0;
+		if (val >= 0 && val < 128) {
+			if (this.pos >= this.length) this.realloc(1);
+			this.buf[this.pos++] = val;
+			return;
+		}
 		if (val > 268435455 || val < 0) {
 			writeBigVarint(val, this);
 			return;
@@ -19824,11 +19948,12 @@ var Pbf = class {
 		const len = buffer.length;
 		this.writeVarint(len);
 		this.realloc(len);
-		for (let i = 0; i < len; i++) this.buf[this.pos++] = buffer[i];
+		this.buf.set(buffer, this.pos);
+		this.pos += len;
 	}
 	/**
 	* @template T
-	* @param {(obj: T, pbf: Pbf) => void} fn
+	* @param {(obj: T, pbf: PbfWriter) => void} fn
 	* @param {T} obj
 	*/
 	writeRawMessage(fn, obj) {
@@ -19844,7 +19969,7 @@ var Pbf = class {
 	/**
 	* @template T
 	* @param {number} tag
-	* @param {(obj: T, pbf: Pbf) => void} fn
+	* @param {(obj: T, pbf: PbfWriter) => void} fn
 	* @param {T} obj
 	*/
 	writeMessage(tag, fn, obj) {
@@ -20005,7 +20130,7 @@ var Pbf = class {
 /**
 * @param {number} l
 * @param {boolean | undefined} s
-* @param {Pbf} p
+* @param {PbfReader} p
 */
 function readVarintRemainder(l, s, p) {
 	const buf = p.buf;
@@ -20040,7 +20165,7 @@ function toNum(low, high, isSigned) {
 }
 /**
 * @param {number} val
-* @param {Pbf} pbf
+* @param {PbfWriter} pbf
 */
 function writeBigVarint(val, pbf) {
 	let low, high;
@@ -20064,7 +20189,7 @@ function writeBigVarint(val, pbf) {
 /**
 * @param {number} high
 * @param {number} low
-* @param {Pbf} pbf
+* @param {PbfWriter} pbf
 */
 function writeBigVarintLow(low, high, pbf) {
 	pbf.buf[pbf.pos++] = low & 127 | 128;
@@ -20079,7 +20204,7 @@ function writeBigVarintLow(low, high, pbf) {
 }
 /**
 * @param {number} high
-* @param {Pbf} pbf
+* @param {PbfWriter} pbf
 */
 function writeBigVarintHigh(high, pbf) {
 	const lsb = (high & 7) << 4;
@@ -20098,72 +20223,72 @@ function writeBigVarintHigh(high, pbf) {
 /**
 * @param {number} startPos
 * @param {number} len
-* @param {Pbf} pbf
+* @param {PbfWriter} pbf
 */
 function makeRoomForExtraLength(startPos, len, pbf) {
 	const extraLen = len <= 16383 ? 1 : len <= 2097151 ? 2 : len <= 268435455 ? 3 : Math.floor(Math.log(len) / (Math.LN2 * 7));
 	pbf.realloc(extraLen);
-	for (let i = pbf.pos - 1; i >= startPos; i--) pbf.buf[i + extraLen] = pbf.buf[i];
+	pbf.buf.copyWithin(startPos + extraLen, startPos, pbf.pos);
 }
 /**
 * @param {number[]} arr
-* @param {Pbf} pbf
+* @param {PbfWriter} pbf
 */
 function writePackedVarint(arr, pbf) {
 	for (let i = 0; i < arr.length; i++) pbf.writeVarint(arr[i]);
 }
 /**
 * @param {number[]} arr
-* @param {Pbf} pbf
+* @param {PbfWriter} pbf
 */
 function writePackedSVarint(arr, pbf) {
 	for (let i = 0; i < arr.length; i++) pbf.writeSVarint(arr[i]);
 }
 /**
 * @param {number[]} arr
-* @param {Pbf} pbf
+* @param {PbfWriter} pbf
 */
 function writePackedFloat(arr, pbf) {
 	for (let i = 0; i < arr.length; i++) pbf.writeFloat(arr[i]);
 }
 /**
 * @param {number[]} arr
-* @param {Pbf} pbf
+* @param {PbfWriter} pbf
 */
 function writePackedDouble(arr, pbf) {
 	for (let i = 0; i < arr.length; i++) pbf.writeDouble(arr[i]);
 }
 /**
 * @param {boolean[]} arr
-* @param {Pbf} pbf
+* @param {PbfWriter} pbf
 */
 function writePackedBoolean(arr, pbf) {
 	for (let i = 0; i < arr.length; i++) pbf.writeBoolean(arr[i]);
 }
 /**
 * @param {number[]} arr
-* @param {Pbf} pbf
+* @param {PbfWriter} pbf
 */
 function writePackedFixed32(arr, pbf) {
 	for (let i = 0; i < arr.length; i++) pbf.writeFixed32(arr[i]);
 }
 /**
 * @param {number[]} arr
-* @param {Pbf} pbf
+* @param {PbfWriter} pbf
 */
 function writePackedSFixed32(arr, pbf) {
 	for (let i = 0; i < arr.length; i++) pbf.writeSFixed32(arr[i]);
 }
 /**
 * @param {number[]} arr
-* @param {Pbf} pbf
+* @param {PbfWriter} pbf
 */
 function writePackedFixed64(arr, pbf) {
 	for (let i = 0; i < arr.length; i++) pbf.writeFixed64(arr[i]);
 }
 /**
 * @param {number[]} arr
-* @param {Pbf} pbf
+* @param {PbfWriter} pbf
 */
 function writePackedSFixed64(arr, pbf) {
 	for (let i = 0; i < arr.length; i++) pbf.writeSFixed64(arr[i]);
@@ -21750,7 +21875,7 @@ var GeoJSONWrapper = class {
 * @return uncompressed, pbf-serialized tile data
 */
 function fromVectorTileJs(tile, jsonPrefix = "") {
-	const out = new Pbf();
+	const out = new PbfWriter();
 	writeTile(tile, out, jsonPrefix);
 	return out.finish();
 }
@@ -22028,6 +22153,7 @@ var FeatureTable = class {
 		this._idVector = _idVector;
 		this._propertyVectors = _propertyVectors;
 		this._extent = _extent;
+		if (_name.length === 0) throw new Error("Missing layer name");
 	}
 	get name() {
 		return this._name;
@@ -22161,7 +22287,7 @@ var PhysicalLevelTechnique;
 * Bit masks for each bitwidth 0-32.
 * DO NOT MUTATE - this is a shared constant.
 */
-const masks = new Uint32Array(33);
+const masks = /* @__PURE__ */ new Uint32Array(33);
 masks[0] = 0;
 for (let bitWidth = 1; bitWidth <= 32; bitWidth++) masks[bitWidth] = bitWidth === 32 ? 4294967295 : 4294967295 >>> 32 - bitWidth;
 const MASKS = masks;
@@ -23080,7 +23206,7 @@ function fastUnpack256_Generic(inValues, inPos, out, outPos, bitWidth) {
 //#endregion
 //#region node_modules/@maplibre/mlt/dist/decoding/fastPforDecoder.js
 const MAX_BIT_WIDTH = 32;
-const BIT_WIDTH_SLOTS = MAX_BIT_WIDTH + 1;
+const BIT_WIDTH_SLOTS = 33;
 const PAGE_SIZE = normalizePageSize(DEFAULT_PAGE_SIZE);
 const BYTE_CONTAINER_SIZE = 3 * PAGE_SIZE / 256 + PAGE_SIZE | 0;
 /**
@@ -24081,6 +24207,48 @@ var LengthType;
 })(LengthType || (LengthType = {}));
 //#endregion
 //#region node_modules/@maplibre/mlt/dist/metadata/tile/streamMetadataDecoder.js
+const PHYSICAL_STREAM_TYPE_BY_ID = [
+	PhysicalStreamType.PRESENT,
+	PhysicalStreamType.DATA,
+	PhysicalStreamType.OFFSET,
+	PhysicalStreamType.LENGTH
+];
+const LOGICAL_LEVEL_TECHNIQUE_BY_ID = [
+	LogicalLevelTechnique.NONE,
+	LogicalLevelTechnique.DELTA,
+	LogicalLevelTechnique.COMPONENTWISE_DELTA,
+	LogicalLevelTechnique.RLE,
+	LogicalLevelTechnique.MORTON,
+	LogicalLevelTechnique.PDE
+];
+const PHYSICAL_LEVEL_TECHNIQUE_BY_ID = [
+	PhysicalLevelTechnique.NONE,
+	PhysicalLevelTechnique.FAST_PFOR,
+	PhysicalLevelTechnique.VARINT
+];
+const DICTIONARY_TYPE_BY_ID = [
+	DictionaryType.NONE,
+	DictionaryType.SINGLE,
+	DictionaryType.SHARED,
+	DictionaryType.VERTEX,
+	DictionaryType.MORTON,
+	DictionaryType.FSST
+];
+const OFFSET_TYPE_BY_ID = [
+	OffsetType.VERTEX,
+	OffsetType.INDEX,
+	OffsetType.STRING,
+	OffsetType.KEY
+];
+const LENGTH_TYPE_BY_ID = [
+	LengthType.VAR_BINARY,
+	LengthType.GEOMETRIES,
+	LengthType.PARTS,
+	LengthType.RINGS,
+	LengthType.TRIANGLES,
+	LengthType.SYMBOL,
+	LengthType.DICTIONARY
+];
 function decodeStreamMetadata(tile, offset) {
 	const streamMetadata = decodeStreamMetadataInternal(tile, offset);
 	if (streamMetadata.logicalLevelTechnique1 === LogicalLevelTechnique.MORTON) return decodePartialMortonEncodedStreamMetadata(streamMetadata, tile, offset);
@@ -24119,24 +24287,24 @@ function decodePartialRleEncodedStreamMetadata(streamMetadata, tile, offset) {
 }
 function decodeStreamMetadataInternal(tile, offset) {
 	const stream_type = tile[offset.get()];
-	const physicalStreamType = Object.values(PhysicalStreamType)[stream_type >> 4];
-	let logicalStreamType = null;
+	const physicalStreamType = PHYSICAL_STREAM_TYPE_BY_ID[stream_type >> 4];
+	let logicalStreamType = {};
 	switch (physicalStreamType) {
 		case PhysicalStreamType.DATA:
-			logicalStreamType = { dictionaryType: Object.values(DictionaryType)[stream_type & 15] };
+			logicalStreamType = { dictionaryType: DICTIONARY_TYPE_BY_ID[stream_type & 15] };
 			break;
 		case PhysicalStreamType.OFFSET:
-			logicalStreamType = { offsetType: Object.values(OffsetType)[stream_type & 15] };
+			logicalStreamType = { offsetType: OFFSET_TYPE_BY_ID[stream_type & 15] };
 			break;
 		case PhysicalStreamType.LENGTH:
-			logicalStreamType = { lengthType: Object.values(LengthType)[stream_type & 15] };
+			logicalStreamType = { lengthType: LENGTH_TYPE_BY_ID[stream_type & 15] };
 			break;
 	}
 	offset.increment();
 	const encodings_header = tile[offset.get()];
-	const llt1 = Object.values(LogicalLevelTechnique)[encodings_header >> 5];
-	const llt2 = Object.values(LogicalLevelTechnique)[encodings_header >> 2 & 7];
-	const plt = Object.values(PhysicalLevelTechnique)[encodings_header & 3];
+	const llt1 = LOGICAL_LEVEL_TECHNIQUE_BY_ID[encodings_header >> 5];
+	const llt2 = LOGICAL_LEVEL_TECHNIQUE_BY_ID[encodings_header >> 2 & 7];
+	const plt = PHYSICAL_LEVEL_TECHNIQUE_BY_ID[encodings_header & 3];
 	offset.increment();
 	const sizeInfo = decodeVarintInt32(tile, offset, 2);
 	const numValues = sizeInfo[0];
@@ -24296,7 +24464,10 @@ function decodeSignedConstInt64Stream(data, offset, streamMetadata) {
 }
 function decodeUnsignedConstInt64Stream(data, offset, streamMetadata) {
 	const values = decodeVarintInt64(data, offset, streamMetadata.numValues);
-	if (values.length === 1) return values[0];
+	if (values.length === 1) {
+		if (streamMetadata.logicalLevelTechnique1 === LogicalLevelTechnique.DELTA) return decodeZigZagInt64Value(values[0]);
+		return values[0];
+	}
 	return decodeUnsignedConstRleInt64(values);
 }
 /**
@@ -25860,6 +26031,7 @@ function decodeEmbeddedTileSetMetadata(bytes, offset) {
 	meta.featureTables = [];
 	const table = {};
 	table.name = decodeString(bytes, offset);
+	if (table.name.length === 0) throw new Error("Missing layer name");
 	const extent = decodeVarintInt32(bytes, offset, 1)[0] >>> 0;
 	const columnCount = decodeVarintInt32(bytes, offset, 1)[0] >>> 0;
 	table.columns = new Array(columnCount);
@@ -25933,7 +26105,7 @@ function decodeTile(tile, geometryScaling, idWithinMaxSafeInteger = true) {
 }
 function decodeIdColumn(tile, columnMetadata, offset, columnName, idDataStreamMetadata, sizeOrNullabilityBuffer, idWithinMaxSafeInteger = false) {
 	const scalarTypeMetadata = columnMetadata.scalarType;
-	if (!scalarTypeMetadata || scalarTypeMetadata.type !== "logicalType" || scalarTypeMetadata.logicalType !== LogicalScalarType.ID) throw new Error(`ID column must be a logical ID scalar type: ${columnName}`);
+	if (scalarTypeMetadata?.type !== "logicalType" || scalarTypeMetadata.logicalType !== LogicalScalarType.ID) throw new Error(`ID column must be a logical ID scalar type: ${columnName}`);
 	const idDataType = scalarTypeMetadata.longID ? ScalarType.UINT_64 : ScalarType.UINT_32;
 	const nullabilityBuffer = typeof sizeOrNullabilityBuffer === "number" ? void 0 : sizeOrNullabilityBuffer;
 	const vectorType = getVectorType(idDataStreamMetadata, sizeOrNullabilityBuffer, tile, offset, idDataType === ScalarType.UINT_64 ? "int64" : "int32");
@@ -26153,7 +26325,7 @@ var FeatureIndex = class {
 				case "mlt":
 					this.vtLayers = new MLTVectorTile(this.rawTileData).layers;
 					break;
-				default: this.vtLayers = new VectorTile(new Pbf(this.rawTileData)).layers;
+				default: this.vtLayers = new VectorTile(new PbfReader(this.rawTileData)).layers;
 			}
 			this.sourceLayerCoder = new DictionaryCoder(this.vtLayers ? Object.keys(this.vtLayers).sort() : [GEOJSON_TILE_LAYER_NAME]);
 		}
@@ -26712,7 +26884,7 @@ function sumWithinRange(ranges, min, max) {
 }
 function stretchZonesToCuts(stretchZones, fixedSize, stretchSize) {
 	const cuts = [{
-		fixed: -border,
+		fixed: -1,
 		stretch: 0
 	}];
 	for (const [c1, c2] of stretchZones) {
@@ -28140,16 +28312,13 @@ var WorkerTileState = class {
 		tile.abort.abort();
 		delete this.loading[uid];
 	}
+	getParsing(uid) {
+		return this.parsing[uid];
+	}
 	setParsing(uid, state) {
 		this.parsing[uid] = state;
 	}
-	consumeParsing(uid) {
-		const state = this.parsing[uid];
-		if (!state) return void 0;
-		delete this.parsing[uid];
-		return state;
-	}
-	clearParsing(uid) {
+	removeParsing(uid) {
 		delete this.parsing[uid];
 	}
 	markLoaded(uid, tile) {
@@ -28276,7 +28445,7 @@ function sliceVectorTileLayer(sourceLayer, maxZoomTileID, targetTileID) {
 			point.y = point.y * scale - offsetY;
 		}
 		const buffer = 128;
-		geometry = clipGeometry(geometry, feature.type, -buffer, -buffer, extent + buffer, extent + buffer);
+		geometry = clipGeometry(geometry, feature.type, -128, -128, extent + buffer, extent + buffer);
 		if (geometry.length === 0) continue;
 		featureWrappers.push(new VectorTileFeatureOverzoomed(feature.type, geometry, feature.properties, feature.id, extent));
 	}
@@ -28302,7 +28471,7 @@ var VectorTileWorkerSource = class {
 	loadVectorTile(params, rawData) {
 		try {
 			return {
-				vectorTile: params.encoding !== "mlt" ? new VectorTile(new Pbf(rawData)) : new MLTVectorTile(rawData),
+				vectorTile: params.encoding !== "mlt" ? new VectorTile(new PbfReader(rawData)) : new MLTVectorTile(rawData),
 				rawData
 			};
 		} catch (ex) {
@@ -28349,7 +28518,7 @@ var VectorTileWorkerSource = class {
 			try {
 				return await this._parseWorkerTile(workerTile, params, parseState);
 			} finally {
-				this.tileState.clearParsing(uid);
+				this.tileState.removeParsing(uid);
 			}
 		} catch (err) {
 			this.tileState.finishLoading(uid);
@@ -28365,9 +28534,10 @@ var VectorTileWorkerSource = class {
 		let result = await workerTile.parse(workerTile.vectorTile, this.layerIndex, this.availableImages, this.actor, params.subdivisionGranularity);
 		if (parseState) {
 			const { rawData, cacheControl, resourceTiming } = parseState;
+			const encoding = params.overzoomParameters ? "mvt" : params.encoding;
 			result = extend({
 				rawTileData: rawData.slice(0),
-				encoding: params.encoding
+				encoding
 			}, result, cacheControl, resourceTiming);
 		}
 		return result;
@@ -28424,8 +28594,12 @@ var VectorTileWorkerSource = class {
 		if (!workerTile) throw new Error("Should not be trying to reload a tile that was never loaded or has been removed");
 		workerTile.showCollisionBoxes = params.showCollisionBoxes;
 		if (workerTile.status === "parsing") {
-			const parseState = this.tileState.consumeParsing(uid);
-			return await this._parseWorkerTile(workerTile, params, parseState);
+			const parseState = this.tileState.getParsing(uid);
+			try {
+				return await this._parseWorkerTile(workerTile, params, parseState);
+			} finally {
+				this.tileState.removeParsing(uid);
+			}
 		}
 		if (workerTile.status === "done" && workerTile.vectorTile) return await this._parseWorkerTile(workerTile, params);
 	}
@@ -28518,7 +28692,7 @@ var GeoJSONWorkerSource = class {
 			try {
 				return await this._parseWorkerTile(workerTile, params, parseState);
 			} finally {
-				this.tileState.clearParsing(uid);
+				this.tileState.removeParsing(uid);
 			}
 		} catch (err) {
 			workerTile.status = "done";
@@ -28532,8 +28706,12 @@ var GeoJSONWorkerSource = class {
 		if (!workerTile) throw new Error("Should not be trying to reload a tile that was never loaded or has been removed");
 		workerTile.showCollisionBoxes = params.showCollisionBoxes;
 		if (workerTile.status === "parsing") {
-			const parseState = this.tileState.consumeParsing(uid);
-			return await this._parseWorkerTile(workerTile, params, parseState);
+			const parseState = this.tileState.getParsing(uid);
+			try {
+				return await this._parseWorkerTile(workerTile, params, parseState);
+			} finally {
+				this.tileState.removeParsing(uid);
+			}
 		}
 		if (workerTile.status === "done" && workerTile.vectorTile) return await this._parseWorkerTile(workerTile, params);
 	}
